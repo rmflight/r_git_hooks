@@ -37,6 +37,6 @@ if (doIncrement){
   currDCF[1,"Version"] <- newVersion
   write.dcf(currDCF, "DESCRIPTION")
   system("git add DESCRIPTION")
-  system('git commit -m "increment package version"')
+  system('doIncrement=FALSE git commit -m "increment package version"') # doIncrement=FALSE is required, otherwise we end up in an infinite loop
   cat("Incremented package version and committed!\n")
 }
