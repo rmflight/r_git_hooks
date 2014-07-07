@@ -35,6 +35,7 @@ if (doIncrement){
   splitVersion[nVer] <- newEndVersion
   newVersion <- paste(splitVersion, collapse=".")
   currDCF[1,"Version"] <- newVersion
+  currDCF[1, "Date"] <- strftime(as.POSIXlt(Sys.Date()), "%Y-%m-%d")
   write.dcf(currDCF, "DESCRIPTION")
   system("git add DESCRIPTION")
   system('doIncrement=FALSE git commit -m "increment package version"') # doIncrement=FALSE is required, otherwise we end up in an infinite loop
