@@ -42,11 +42,11 @@ if ("DESCRIPTION" %in% file_diff) {
 }
 
 if ((length(file_diff) > 0) && do_increment){
-	# if you have different fields that you want to maintain the white space,
-	# modify / add them here.
-	keep_white_fields <- c("Authors@R", "DESCRIPTION", "Imports", "Suggests",
-												"URL")
-	curr_dcf <- read.dcf("DESCRIPTION", keep.white = keep_white_fields)
+  # if you have different fields that you want to maintain the white space,
+  # modify / add them here.
+  keep_white_fields <- c("Authors@R", "DESCRIPTION", "Imports", "Suggests",
+                         "URL")
+  curr_dcf <- read.dcf("DESCRIPTION", keep.white = keep_white_fields)
   curr_version <- curr_dcf[1, "Version"]
   split_version <- strsplit(curr_version, ".", fixed = TRUE)[[1]]
   n_ver <- length(split_version)
