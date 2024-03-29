@@ -1,44 +1,60 @@
-#!/path/2/Rscript
+#!/usr/bin/env Rscript
 
-# License: CC0 (just be nice and point others to where you got this)
-# Author: Robert M Flight <rflight79@gmail.com>, github.com/rmflight
+# License: 
+#   CC0 (just be nice and point others to where you got this)
+# Authors: 
+#   Robert M Flight <rflight79@gmail.com>
+#   Gaden Aden-Buie <garrick@adenbuie.com>
 #
-# This is a pre-commit hook that checks that there are files to be committed, and if there are, increments the package version
-# in the DESCRIPTION file. 
+# This is a pre-commit hook that checks that there are files to be committed, 
+# and if there are, increments the package version in the DESCRIPTION file.
+# It also checks if the version in the DESCRIPTION has any manual changes, and
+# doesn't increment if there are any there.
 #
-# To install it, simply copy this into the ".git/hooks/pre-commit" file of your git repo, change /path/2/Rscript, and make it
-# executable. Note that /path/2/Rscript is the same as your /path/2/R/bin/R, or may be in /usr/bin/Rscript depending on your
-# installation. This has been tested on both Linux and Windows installations.
+# To install it, simply copy this into the ".git/hooks/pre-commit" file of your 
+# git repo, and make sure that Rscript is on your path.
 #
-# In instances where you do NOT want the version incremented, add the environment variable doIncrement=FALSE to your git call.
-# eg "doIncrement=FALSE git commit -m "commit message"". 
-# This is useful when you change the major version number for example.
+# In instances where you do NOT want the version incremented, add the environment 
+# variable doIncrement=FALSE to your git call.
+#   eg "doIncrement=FALSE git commit -m "commit message"". 
 
-doIncrement <- TRUE # default
+do_increment <- TRUE # default
 
 # get the environment variable and modify if necessary
-tmpEnv <- as.logical(Sys.getenv("doIncrement"))
-if (!is.na(tmpEnv)){
-  doIncrement <- tmpEnv
+tmp_env <- as.logical(Sys.getenv("doIncrement"))
+if (!is.na(tmp_env)){
+  do_increment <- tmp_env
 }
 
 # check that there are files that will be committed, don't want to increment version if there won't be a commit
-fileDiff <- system("git diff HEAD --name-only", intern=TRUE)
+file_diff <- system("git diff HEAD --name-only", intern = TRUE)
 
-if ((length(fileDiff) > 0) && doIncrement){
+if ("DESCRIPTION" %in% file_diff) {
+	# Don't want to overwrite manual version bump
+	desc_diff <- system("git diff HEAD DESCRIPTION", intern = TRUE)
+	do_increment <- !any(grepl("\\+Version", desc_diff))
+	staged_files <- system("git diff HEAD --name-only --staged", intern = TRUE)
+	desc_staged <- "DESCRIPTION" %in% staged_files
+	if (!desc_staged) {
+		if (do_increment) cat("DESCRIPTION had additional changes that were committed.\n")
+		else cat("DESCRIPTION contains manual version bump but was not staged, so it was not committed.\n")
+	} 
+}
 
-  currDir <- getwd() # this should be the top level directory of the git repo
-  currDCF <- read.dcf("DESCRIPTION")
-  currVersion <- currDCF[1,"Version"]
-  splitVersion <- strsplit(currVersion, ".", fixed=TRUE)[[1]]
-  nVer <- length(splitVersion)
-  currEndVersion <- as.integer(splitVersion[nVer])
-  newEndVersion <- as.character(currEndVersion + 1)
-  splitVersion[nVer] <- newEndVersion
-  newVersion <- paste(splitVersion, collapse=".")
-  currDCF[1,"Version"] <- newVersion
-  currDCF[1, "Date"] <- strftime(as.POSIXlt(Sys.Date()), "%Y-%m-%d")
-  write.dcf(currDCF, "DESCRIPTION")
+if ((length(file_diff) > 0) && do_increment){
+	# if you have different fields that you want to maintain the white space,
+	# modify / add them here.
+	keep_white_fields <- c("Authors@R", "DESCRIPTION", "Imports", "Suggests",
+												"URL")
+	curr_dcf <- read.dcf("DESCRIPTION", keep.white = keep_white_fields)
+  curr_version <- curr_dcf[1, "Version"]
+  split_version <- strsplit(curr_version, ".", fixed = TRUE)[[1]]
+  n_ver <- length(split_version)
+  split_version[n_ver] <- as.character(as.integer(split_version[n_ver]) + 1)
+  new_version <- paste(split_version, collapse = ".")
+  curr_dcf[1, "Version"] <- new_version
+  if ("Date" %in% colnames(curr_dcf)) curr_dcf[1, "Date"] <- strftime(as.POSIXlt(Sys.Date()), "%Y-%m-%d")
+  write.dcf(curr_dcf, "DESCRIPTION", keep.white = keep_white_fields)
   system("git add DESCRIPTION")
-  cat("Incremented package version and added to commit!\n")
+  cat("Incremented package version", curr_version, "-->", new_version, "and added to commit!\n")
 }
