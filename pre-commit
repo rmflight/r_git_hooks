@@ -32,16 +32,19 @@ file_diff <- system("git diff HEAD --name-only", intern = TRUE)
 if ("DESCRIPTION" %in% file_diff) {
 	# Don't want to overwrite manual version bump
 	desc_diff <- system("git diff HEAD DESCRIPTION", intern = TRUE)
-	do_increment <- !any(grepl("\\+Version", desc_diff))
+	do_increment <- !any(grepl("Version", desc_diff))
 	staged_files <- system("git diff HEAD --name-only --staged", intern = TRUE)
 	desc_staged <- "DESCRIPTION" %in% staged_files
-	if (!desc_staged) {
-		if (do_increment) cat("DESCRIPTION had additional changes that were committed.\n")
-		else cat("DESCRIPTION contains manual version bump but was not staged, so it was not committed.\n")
-	} 
+	if (desc_staged) {
+		if (!do_increment) {
+			cat("DESCRIPTION contains manual version bump had additional changes that were committed.\n")
+		} 
+	} else if (!do_increment) {
+		cat("DESCRIPTION contains manual version bump but was not staged, so it was not committed.\n")
+	}
 }
 
-if ((length(file_diff) > 0) && do_increment){
+if ((length(file_diff) > 0) && do_increment) {
   # if you have different fields that you want to maintain the white space,
   # modify / add them here.
   keep_white_fields <- c("Authors@R", "DESCRIPTION", "Imports", "Suggests",
