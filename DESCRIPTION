@@ -18,7 +18,7 @@ Authors@R: c(
 Description: Provides functions for calculating information-content-informed Kendall-tau.
           This version of Kendall-tau allows for the inclusion of missing values.
 VignetteBuilder: knitr
-License: MIT + file LICENSE
+License: CC0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
